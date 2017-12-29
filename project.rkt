@@ -68,7 +68,7 @@
 ;; "in real life" it would be a helper function of eval-exp.
 (define (eval-under-env e env)
   (cond [(var? e)(envlookup env (var-s e))]
-        [(int? e)(if (integer? int-num e)
+        [(int? e)(if (integer? (int-num e))
             e
             (error "Can't convert a Racket non integer to a NUMEX int"))]
         [(add? e)
@@ -80,8 +80,8 @@
                        (int-num v2)))
                (error "NUMEX addition applied to non-number")))]
         [(mult? e)
-         (let ([v1 (eval-under-env (add-e1 e) env)]
-               [v2 (eval-under-env (add-e2 e) env)])
+         (let ([v1 (eval-under-env (mult-e1 e) env)]
+               [v2 (eval-under-env (mult-e2 e) env)])
            (if (and (int? v1)
                     (int? v2))
                (int (* (int-num v1)
@@ -117,14 +117,31 @@
              [(not(int? v1)) (error "NUMEX mlet doesn't work with non int values")]
              [#t (eval-under-env (mlet-e2 e) (envChanger env (mlet-s e) v1))]
              ))]
+        [(apair? e)
+         (let ([v1 (eval-under-env (apair-e1 e) env)]
+               [v2 (eval-under-env (apair-e2 e) env)])
+           (apair v1 v2))]
+        [(first? e)
+         (let ([v (eval-under-env (first-e1 e) env)])
+           (if(apair? v)
+              (apair-e1 v)
+              (error "NUMEX Can't get first element of non apair")))]
+         [(second? e)
+          (let ([v (eval-under-env (second-e1 e) env)])
+           (if(apair? v)
+              (apair-e2 v)
+              (error "NUMEX Can't get second element of non apair")))]
+         [(ismunit? e)
+           (let ([v (eval-under-env (ismunit-e1 e) env)])
+             (if (equal? v (munit))(int 1)(int 0)))]
         ;; CHANGE add more cases here
         [#t (error (format "bad NUMEX expression: ~v" e))]))
 
-#|
+
 ;; Do NOT change
 (define (eval-exp e)
   (eval-under-env e null))
-
+#|
 ;; Problem 3
 
 (define (ifmunit e1 e2 e3) "CHANGE")

@@ -82,7 +82,18 @@
          (let ([v (eval-under-env (neg-e1 e) env)])
            (if (int? v) (int (- int-num v)) 
                (error "NUMEX negation on non integer expression")))]
-        
+        [(islthan? e)
+         (let ([v1 (eval-under-env (islthan-e1 e) env)]
+               [v2 (eval-under-env (islthan-e2 e) env)])
+           (if (and (int? v1)
+                    (int? v2))
+               (if(< (int-num v1)(int-num v2))(int 1)(int 0))
+               (error "NUMEX islthan doesn't work on non integer values")))]
+        [(ifzero? e)
+         (let ([v (eval-under-env (ifzero-e1) env)])
+           ((if (int? v)
+                ((if (= (int-num v) 0 ) (eval-under-env (ifzero-e2) env)(eval-under-env (ifzero-e3) env)))
+                (error "NUMEX ifzero doesn't work on gaurd with  non integer value"))))]
         ;; CHANGE add more cases here
         [#t (error (format "bad NUMEX expression: ~v" e))]))
 #|

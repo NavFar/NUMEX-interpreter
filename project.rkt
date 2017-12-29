@@ -12,23 +12,27 @@
 (struct int  (num)                  #:transparent)  ;; a constant number, e.g., (int 17)
 (struct add  (e1 e2)                #:transparent)  ;; add two expressions
 (struct mult (e1 e2)                #:transparent)  ;; multiply two expressions
-(struct neg  (e1)                   #:transparent)  ;; negate an 
+(struct neg  (e1)                   #:transparent)  ;; negate an
 (struct fun  (nameopt formal body)  #:transparent)  ;; a recursive(?) 1-argument function
 (struct islthan (e1 e2)             #:transparent)  ;; compare two expressions
 (struct ifzero (e1 e2 e3)           #:transparent)  ;; decide on e1 if it is zero then e2 evaluates else e3 will be evaluated
 (struct ifgthan (e1 e2 e3 e4)       #:transparent)  ;; result is e3 if is e1 strictly greater than e2 else the result is e4
 (struct call (funexp actual)        #:transparent)  ;; function call
 (struct mlet (s e1 e2)              #:transparent)  ;; value of s is bound to e1 in e2
-(struct apair (e1 e2)               #:transparent)  ;; pair constructor  
-(struct first (e1)                  #:transparent)  ;; first part of pair 
-(struct second (e1)                 #:transparent)  ;; second part of pair 
+(struct apair (e1 e2)               #:transparent)  ;; pair constructor
+(struct first (e1)                  #:transparent)  ;; first part of pair
+(struct second (e1)                 #:transparent)  ;; second part of pair
 (struct munit   ()                  #:transparent)  ;; unit value -- good for ending a list
 (struct ismunit (e)                 #:transparent)  ;; if e1 is unit then 1 else 0
 (struct closure (env fun)           #:transparent)  ;; a closure is not in "source" programs; it is what functions evaluate to
 
 ;; Problem 1
-
-(define (racketlist->numexlist xs) "CHANGE")
+(define (racketlist->numexlist xs)
+(cond
+  [(not (list? xs)) ( error "Can't convert non list racket type to a NUMEX list")]
+  [(null? xs) (munit)]
+  [#t ((apair (car xs) (racketlist->numexlist (cdr xs))))]
+  ))
 (define (numexlist->racketlist xs) "CHANGE")
 
 ;; Problem 2
@@ -37,22 +41,22 @@
 ;; Complete this function
 (define (envlookup env str)
   (cond [(null? env) (error "unbound variable during evaluation" str)]
-  		"CHANGE" 
+  		"CHANGE"
 		)
 
-;; Do NOT change the two cases given to you.  
+;; Do NOT change the two cases given to you.
 ;; DO add more cases for other kinds of NUMEX expressions.
 ;; We will test eval-under-env by calling it directly even though
 ;; "in real life" it would be a helper function of eval-exp.
 (define (eval-under-env e env)
-  (cond [(var? e) 
+  (cond [(var? e)
          (envlookup env (var-string e))]
-        [(add? e) 
+        [(add? e)
          (let ([v1 (eval-under-env (add-e1 e) env)]
                [v2 (eval-under-env (add-e2 e) env)])
            (if (and (int? v1)
                     (int? v2))
-               (int (+ (int-num v1) 
+               (int (+ (int-num v1)
                        (int-num v2)))
                (error "NUMEX addition applied to non-number")))]
         ;; CHANGE add more cases here
@@ -61,7 +65,7 @@
 ;; Do NOT change
 (define (eval-exp e)
   (eval-under-env e null))
-        
+
 ;; Problem 3
 
 (define (ifmunit e1 e2 e3) "CHANGE")

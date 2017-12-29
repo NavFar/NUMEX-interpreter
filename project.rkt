@@ -33,7 +33,13 @@
   [(null? xs) (munit)]
   [#t ((apair (car xs) (racketlist->numexlist (cdr xs))))]
   ))
-(define (numexlist->racketlist xs) "CHANGE")
+
+  ;;
+  ;;
+  ;;Part 2 of problem 1 is postponed
+  ;;
+  ;;
+(define (numexlist->racketlist xs))
 
 ;; Problem 2
 

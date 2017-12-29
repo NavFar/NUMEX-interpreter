@@ -31,7 +31,8 @@
 (cond
   [(not (list? xs)) ( error "Can't convert non list racket type to a NUMEX list")]
   [(null? xs) (munit)]
-  [#t ((apair (car xs) (racketlist->numexlist (cdr xs))))]
+  [(not (integer? (car xs))) (error "Can't convert a non integer type to a NUMEX list member")]
+  [#t (apair (int (car xs)) (racketlist->numexlist (cdr xs)))]
   ))
 
   ;;
@@ -131,8 +132,9 @@
            (if(apair? v)
               (apair-e2 v)
               (error "NUMEX Can't get second element of non apair")))]
+         [(munit? e) e]
          [(ismunit? e)
-           (let ([v (eval-under-env (ismunit-e1 e) env)])
+           (let ([v (eval-under-env (ismunit-e e) env)])
              (if (equal? v (munit))(int 1)(int 0)))]
         ;; CHANGE add more cases here
         [#t (error (format "bad NUMEX expression: ~v" e))]))

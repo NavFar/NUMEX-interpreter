@@ -8,19 +8,23 @@
 
 ;; Add the missing ones
 
-(struct int  (num)    #:transparent)  ;; a constant number, e.g., (int 17)
-(struct add  (e1 e2)  #:transparent)  ;; add two expressions
-
-
-(struct fun  (nameopt formal body) #:transparent) ;; a recursive(?) 1-argument function
-(struct call (funexp actual)       #:transparent) ;; function call
-
-
-(struct munit   ()      #:transparent) ;; unit value -- good for ending a list
-(struct ismunit (e)     #:transparent) ;; if e1 is unit then 1 else 0
-
-;; a closure is not in "source" programs; it is what functions evaluate to
-(struct closure (env fun) #:transparent) 
+(struct var  (s)                    #:transparent)  ;; variable
+(struct int  (num)                  #:transparent)  ;; a constant number, e.g., (int 17)
+(struct add  (e1 e2)                #:transparent)  ;; add two expressions
+(struct mult (e1 e2)                #:transparent)  ;; multiply two expressions
+(struct neg  (e1)                   #:transparent)  ;; negate an 
+(struct fun  (nameopt formal body)  #:transparent)  ;; a recursive(?) 1-argument function
+(struct islthan (e1 e2)             #:transparent)  ;; compare two expressions
+(struct ifzero (e1 e2 e3)           #:transparent)  ;; decide on e1 if it is zero then e2 evaluates else e3 will be evaluated
+(struct ifgthan (e1 e2 e3 e4)       #:transparent)  ;; result is e3 if is e1 strictly greater than e2 else the result is e4
+(struct call (funexp actual)        #:transparent)  ;; function call
+(struct mlet (s e1 e2)              #:transparent)  ;; value of s is bound to e1 in e2
+(struct apair (e1 e2)               #:transparent)  ;; pair constructor  
+(struct first (e1)                  #:transparent)  ;; first part of pair 
+(struct second (e1)                 #:transparent)  ;; second part of pair 
+(struct munit   ()                  #:transparent)  ;; unit value -- good for ending a list
+(struct ismunit (e)                 #:transparent)  ;; if e1 is unit then 1 else 0
+(struct closure (env fun)           #:transparent)  ;; a closure is not in "source" programs; it is what functions evaluate to
 
 ;; Problem 1
 

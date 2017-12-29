@@ -48,11 +48,20 @@
 (define (envlookup env str)
   (cond [(not (string? str)) (error "Can't search on environment with a non string name")]
         [(null? env) (error "Unbound variable during evaluation" str)]
-  		  [(not(list? env)) (error "Environment is not a list")]
+        [(not(list? env)) (error "Environment is not a list")]
         [(not(pair? (car env))) (error "Environment list member is not a pair")]
-        [(equal? ((car (car env))) str) (cdr (car env))]
-        [#t (envlookup (cdr env) str)]
-		))
+        [(equal? (car (car env)) str) (cdr (car env))]
+        [#t (envlookup (cdr env) str)]))
+;;
+;;change environment add or modify variable with name str to value 
+;;
+(define (envChanger env str value)
+   (cond[(not (string? str)) (error "Can't create temporary  environment with a non string name")]
+        [(not(list? env)) (error "Input environment is not a list")]
+        [(null? env) (cons (cons str value) null)]
+        [(not(pair? (car env))) (error "Input environment list member is not a pair")]
+        [(equal? (car (car env)) str) (envChanger (cdr env) str value)]
+        [#t (cons (car env)(envChanger (cdr env) str value))]))
 ;; Do NOT change the two cases given to you.
 ;; DO add more cases for other kinds of NUMEX expressions.
 ;; We will test eval-under-env by calling it directly even though
@@ -88,14 +97,29 @@
            (if (and (int? v1)
                     (int? v2))
                (if(< (int-num v1)(int-num v2))(int 1)(int 0))
-               (error "NUMEX islthan doesn't work on non integer values")))]
+               (error "NUMEX islthan doesn't work on gaurd with non integer values")))]
         [(ifzero? e)
-         (let ([v (eval-under-env (ifzero-e1) env)])
+         (let ([v (eval-under-env (ifzero-e1 e) env)])
            ((if (int? v)
-                ((if (= (int-num v) 0 ) (eval-under-env (ifzero-e2) env)(eval-under-env (ifzero-e3) env)))
+                ((if (= (int-num v) 0 ) (eval-under-env (ifzero-e2 e) env)(eval-under-env (ifzero-e3 e) env)))
                 (error "NUMEX ifzero doesn't work on gaurd with  non integer value"))))]
+        [(ifgthan? e)
+         (let ([v1 (eval-under-env (ifgthan-e1 e) env)]
+               [v2 (eval-under-env (ifgthan-e2 e) env)])
+           (if (and (int? v1)
+                    (int? v2))
+               (if(> (int-num v1)(int-num v2))(eval-under-env (ifgthan-e3 e) env)(eval-under-env (ifgthan-e4 e) env))
+               (error "NUMEX isgthan doesn't work on gaurds with non integer values")))]
+        [(mlet? e)
+         (let ([v1 (eval-under-env (mlet-e1 e) env)])
+           (cond
+             [(not(string? (mlet-s e)))(error "NUMEX mlet doesn't work with non string names")]
+             [(not(int? v1)) (error "NUMEX mlet doesn't work with non int values")]
+             [#t (eval-under-env (mlet-e2 e) (envChanger env (mlet-s e) v1))]
+             ))]
         ;; CHANGE add more cases here
         [#t (error (format "bad NUMEX expression: ~v" e))]))
+
 #|
 ;; Do NOT change
 (define (eval-exp e)

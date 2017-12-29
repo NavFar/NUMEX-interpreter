@@ -39,24 +39,29 @@
   ;;Part 2 of problem 1 is postponed
   ;;
   ;;
-(define (numexlist->racketlist xs))
+(define (numexlist->racketlist xs) xs)
 
 ;; Problem 2
 
 ;; lookup a variable in an environment
 ;; Complete this function
 (define (envlookup env str)
-  (cond [(null? env) (error "unbound variable during evaluation" str)]
-  		"CHANGE"
-		)
-
+  (cond [(not (string? str)) (error "Can't search on environment with a non string name")]
+        [(null? env) (error "Unbound variable during evaluation" str)]
+  		  [(not(list? env)) (error "Environment is not a list")]
+        [(not(pair? (car env))) (error "Environment list member is not a pair")]
+        [(equal? ((car (car env))) str) (cdr (car env))]
+        [#t (envlookup (cdr env) str)]
+		))
 ;; Do NOT change the two cases given to you.
 ;; DO add more cases for other kinds of NUMEX expressions.
 ;; We will test eval-under-env by calling it directly even though
 ;; "in real life" it would be a helper function of eval-exp.
 (define (eval-under-env e env)
-  (cond [(var? e)
-         (envlookup env (var-string e))]
+  (cond [(var? e)(envlookup env (var-s e))]
+        [(int? e)(if (integer? int-num e)
+            e
+            (error "Can't convert a Racket non integer to a NUMEX int"))]
         [(add? e)
          (let ([v1 (eval-under-env (add-e1 e) env)]
                [v2 (eval-under-env (add-e2 e) env)])
@@ -65,9 +70,22 @@
                (int (+ (int-num v1)
                        (int-num v2)))
                (error "NUMEX addition applied to non-number")))]
+        [(mult? e)
+         (let ([v1 (eval-under-env (add-e1 e) env)]
+               [v2 (eval-under-env (add-e2 e) env)])
+           (if (and (int? v1)
+                    (int? v2))
+               (int (* (int-num v1)
+                       (int-num v2)))
+               (error "NUMEX multiplication applied to non-number")))]
+        [(neg? e)
+         (let ([v (eval-under-env (neg-e1 e) env)])
+           (if (int? v) (int (- int-num v)) 
+               (error "NUMEX negation on non integer expression")))]
+        
         ;; CHANGE add more cases here
         [#t (error (format "bad NUMEX expression: ~v" e))]))
-
+#|
 ;; Do NOT change
 (define (eval-exp e)
   (eval-under-env e null))
@@ -103,3 +121,4 @@
 ;; Do NOT change this
 (define (eval-exp-c e)
   (eval-under-env-c (compute-free-vars e) null))
+|#

@@ -34,12 +34,12 @@
   [#t (apair  (car xs) (racketlist->numexlist (cdr xs)))]
   ))
 
-  ;;
-  ;;
-  ;;Part 2 of problem 1 is postponed
-  ;;
-  ;;
-(define (numexlist->racketlist xs) xs)
+(define (numexlist->racketlist xs)
+  (cond
+  [(munit? xs) '()]
+  [(not (apair? xs)) (error "Can't convert non NUMEX list to racket type")]
+  [#t (cons (apair-e1 xs) (numexlist->racketlist (apair-e2 xs)))]
+  ))
 
 ;; Problem 2
 

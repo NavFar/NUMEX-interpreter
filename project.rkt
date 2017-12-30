@@ -176,11 +176,13 @@
   (eval-under-env e null))
 
 (define env (list (cons "first" (int 1)) (cons "second" (int 2)))) 
-#|
+
 ;; Problem 3
 
-(define (ifmunit e1 e2 e3) "CHANGE")
-
+(define (ifmunit e1 e2 e3)
+  (ifzero (add (int -1) (ismunit e1)) (e2) (e3))
+  )
+#|
 (define (mlet* bs e2) "CHANGE")
 
 (define (ifeq e1 e2 e3 e4) "CHANGE")

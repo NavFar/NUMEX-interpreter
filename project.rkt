@@ -184,7 +184,7 @@
 (define (eval-exp e)
   (eval-under-env e null))
 
-(define env (list (cons "first" (int 1)) (cons "second" (int 2)))) 
+(define env (list (cons "first" (int 1)) (cons "second" (int 2)) (cons "third" (apair (add (int 2)(int 5))(int 3))))) 
 
 ;; Problem 3
 
@@ -204,9 +204,13 @@
     [(not (NUMEX-exp? (cdr (car bs))))(error "NUMEX mlet* macro input list of pair should have a NUMEX expression tail")]
     [#t (mlet (car (car bs)) (cdr (car bs)) (mlet* (cdr bs) e2))]
     ))
-#|
-(define (ifeq e1 e2 e3 e4) "CHANGE")
 
+(define (ifeq e1 e2 e3 e4)
+  (cond
+    [(not (and (NUMEX-exp? e1)(NUMEX-exp? e2)(NUMEX-exp? e3)(NUMEX-exp? e4)))(error "NUMEX ifeq macro inputs should all be NUMEX expression")]
+    [#t (ifzero (add (neg (e1)) (e2)) e3 e4)]
+    ))
+#|
 ;; Problem 4
 
 (define numex-map "CHANGE")

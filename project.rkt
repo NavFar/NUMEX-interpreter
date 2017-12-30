@@ -62,6 +62,22 @@
         [(not(pair? (car env))) (error "Input environment list member is not a pair")]
         [(equal? (car (car env)) str) (envChanger (cdr env) str expression)]
         [#t (cons (car env)(envChanger (cdr env) str expression))]))
+;;
+;;detect that input is a numix expression
+;;
+(define (nexp? input)
+  (or (closure? input)(munit? input)(apair? input)(int? input)))
+;;
+;;detect that input is an env
+;;
+(define (env? input)
+  (cond[(not (list? input)) #f]
+       [(null? input) #t]
+       [(not (pair? (car input))) #f]
+       [(not (string? (car (car input)))) #f ]
+       [(not (nexp? (cdr (car input)))) #f]
+       [#t (env? (cdr input))]
+       ))
 ;; Do NOT change the two cases given to you.
 ;; DO add more cases for other kinds of NUMEX expressions.
 ;; We will test eval-under-env by calling it directly even though
@@ -114,7 +130,6 @@
          (let ([v1 (eval-under-env (mlet-e1 e) env)])
            (cond
              [(not(string? (mlet-s e)))(error "NUMEX mlet doesn't work with non string names")]
-             [(or(int? v1) ()) (error "NUMEX mlet doesn't work with non int values")]
              [#t (eval-under-env (mlet-e2 e) (envChanger env (mlet-s e) v1))]
              ))]
         [(apair? e)
@@ -135,7 +150,23 @@
          [(ismunit? e)
            (let ([v (eval-under-env (ismunit-e e) env)])
              (if (munit? v)(int 1)(int 0)))]
-
+         [(closure? e)
+          (cond[(not (env? (closure-env e)))(error "Numex Closure only works on valid environment")]
+               [(not (fun? (closure-fun e)))(error "Numex Closure need a valid function")]
+               [#t (closure (closure-env e)(closure-fun e))])]
+         [(fun? e)
+          (cond[(not (or(null? (fun-nameopt e))(string? (fun-nameopt e))))(error "Numex function name should be string or null")]
+               [(not (string?  (fun-formal e)))(error "Numex argument should be a string")]
+               [#t (closure env e)])]
+         [(call? e)
+          (let ([v1 (eval-under-env (call-funexp e) env)]
+                [v2 (eval-under-env (call-actual e) env)])
+            (if(and (closure? v1) (nexp? v2)) 
+               (let([tempEnv (envChanger (closure-env v1) (fun-formal (closure-fun v1)) v2)])
+                 (if (null?(fun-nameopt (closure-fun v1)))
+                     (eval-under-env (fun-body (closure-fun v1)) tempEnv)
+                     (eval-under-env (fun-body (closure-fun v1)) (envChanger tempEnv (fun-nameopt (closure-fun v1)) v1))))
+               (error "Function call should have a closure and value")))]
         ;; CHANGE add more cases here
         [#t (error (format "bad NUMEX expression: ~v" e))]))
 

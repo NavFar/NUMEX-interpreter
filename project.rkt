@@ -51,7 +51,7 @@
         [(null? env) (error "Unbound variable during evaluation" str)]
         [(not(list? env)) (error "Environment is not a list")]
         [(not(pair? (car env))) (error "Environment list member is not a pair")]
-        [(equal? (car (car env)) str) (cdr (car env))]
+        [(equal? (car (car env)) str) (int (cdr (car env)))]
         [#t (envlookup (cdr env) str)]))
 ;;
 ;;change environment add or modify variable with name str to value 
@@ -90,8 +90,8 @@
                (error "NUMEX multiplication applied to non-number")))]
         [(neg? e)
          (let ([v (eval-under-env (neg-e1 e) env)])
-           (if (int? v) (int (- int-num v)) 
-               (error "NUMEX negation on non integer expression")))]
+           (if (int? v) (int (- (int-num v))) 
+               (error "NUMEX negation on non integer expression" v)))]
         [(islthan? e)
          (let ([v1 (eval-under-env (islthan-e1 e) env)]
                [v2 (eval-under-env (islthan-e2 e) env)])
@@ -135,7 +135,8 @@
          [(munit? e) e]
          [(ismunit? e)
            (let ([v (eval-under-env (ismunit-e e) env)])
-             (if (equal? v (munit))(int 1)(int 0)))]
+             (if (munit? v)(int 1)(int 0)))]
+
         ;; CHANGE add more cases here
         [#t (error (format "bad NUMEX expression: ~v" e))]))
 
@@ -143,6 +144,8 @@
 ;; Do NOT change
 (define (eval-exp e)
   (eval-under-env e null))
+
+(define env (list (cons "first" 1) (cons "second" 2))) (eval-under-env (neg(var "second")) env)
 #|
 ;; Problem 3
 

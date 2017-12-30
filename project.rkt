@@ -63,10 +63,19 @@
         [(equal? (car (car env)) str) (envChanger (cdr env) str expression)]
         [#t (cons (car env)(envChanger (cdr env) str expression))]))
 ;;
-;;detect that input is a numix expression
+;;detect that input is a numex value
 ;;
-(define (nexp? input)
+(define (NUMEX-value? input)
   (or (closure? input)(munit? input)(apair? input)(int? input)))
+;;
+;;detect that input is a numex expression
+;;
+(define (NUMEX-exp? input)
+  (or (var? input)(int? input)(add? input)(mult? input)
+      (neg? input)(fun? input)(islthan? input)(ifzero? input)
+      (ifgthan? input)(call? input)(mlet? input)(apair? input)
+      (first? input)(second? input)(munit? input)(ismunit? input)
+      (closure? input)))
 ;;
 ;;detect that input is an env
 ;;
@@ -75,7 +84,7 @@
        [(null? input) #t]
        [(not (pair? (car input))) #f]
        [(not (string? (car (car input)))) #f ]
-       [(not (nexp? (cdr (car input)))) #f]
+       [(not (NUMEX-value? (cdr (car input)))) #f]
        [#t (env? (cdr input))]
        ))
 ;; Do NOT change the two cases given to you.
@@ -161,7 +170,7 @@
          [(call? e)
           (let ([v1 (eval-under-env (call-funexp e) env)]
                 [v2 (eval-under-env (call-actual e) env)])
-            (if(and (closure? v1) (nexp? v2)) 
+            (if(and (closure? v1) (NUMEX-value? v2)) 
                (let([tempEnv (envChanger (closure-env v1) (fun-formal (closure-fun v1)) v2)])
                  (if (null?(fun-nameopt (closure-fun v1)))
                      (eval-under-env (fun-body (closure-fun v1)) tempEnv)
@@ -180,11 +189,22 @@
 ;; Problem 3
 
 (define (ifmunit e1 e2 e3)
-  (ifzero (add (int -1) (ismunit e1)) e2 e3) 
-  )
-#|
-(define (mlet* bs e2) "CHANGE")
+  (if (and(NUMEX-exp? e1)(NUMEX-exp? e2)(NUMEX-exp? e3))
+  (ifzero (add (int -1) (ismunit e1)) e2 e3)
+  (error "NUMEX ifmunit macro need all input be NUMEX expression")
+  ))
 
+(define (mlet* bs e2)
+  (cond
+    [(not(list? bs))(error "NUMEX mlet* macro need a list input")]
+    [(not (NUMEX-exp? e2))(error "NUMEX mlet* macro need NUMEX expression as second input")]
+    [(null? bs) e2]
+    [(not (pair? (car bs)))(error "NUMEX mlet* macro need a list of PAIRS input")]
+    [(not (string? (car (car bs)))) (error "NUMEX mlet* macro input list of pair should have a string head")]
+    [(not (NUMEX-exp? (cdr (car bs))))(error "NUMEX mlet* macro input list of pair should have a NUMEX expression tail")]
+    [#t (mlet (car (car bs)) (cdr (car bs)) (mlet* (cdr bs) e2))]
+    ))
+#|
 (define (ifeq e1 e2 e3 e4) "CHANGE")
 
 ;; Problem 4

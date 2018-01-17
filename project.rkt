@@ -208,7 +208,7 @@
 (define (ifeq e1 e2 e3 e4)
   (cond
     [(not (and (NUMEX-exp? e1)(NUMEX-exp? e2)(NUMEX-exp? e3)(NUMEX-exp? e4)))(error "NUMEX ifeq macro inputs should all be NUMEX expression")]
-    [#t (ifzero (add (neg (e1)) (e2)) e3 e4)]
+    [#t (ifzero (add (neg e1) e2) e3 e4)]
     ))
 #|
 ;; Problem 4

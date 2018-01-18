@@ -77,6 +77,16 @@
       (first? input)(second? input)(munit? input)(ismunit? input)
       (closure? input)))
 ;;
+;;detect that input is a numex list
+;;
+#|(define (NUMEX-list? input)
+  (cond
+    [(munit? input) #t]
+    [(apair? input) ]
+    )
+  )
+|#
+;;
 ;;detect that input is an env
 ;;
 (define (env? input)
@@ -213,9 +223,17 @@
 
 ;; Problem 4
 
-(define (numex-map fun input-list)
-  (cond [(not())(error "numex-map need function as first input")])
+(define (numex-map input-fun)
+  (cond 
+    [(not(fun? input-fun))(error "numex-map need function as first input")]
+    [#t (fun "list-func" input-list (cond
+                                 [(munit? input-list)(munit)]
+                                 [#t (apair (call input-fun (first input-list))(call (var "list-func") (second input-list)))]
+                                ))]
+    )
   )
+
+
 #|
 (define numex-mapAddN
   (mlet "map" numex-map

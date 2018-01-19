@@ -187,7 +187,7 @@
                      (eval-under-env (fun-body (closure-fun v1)) (envChanger tempEnv (fun-nameopt (closure-fun v1)) v1))))
                (error "Function call should have a closure and value")))]
         ;; CHANGE add more cases here
-        [#t (error (format "bad NUMEX expression: ~v" e))]))
+        [#t (error (format "bad NUMEX expressiona: ~v" e))]))
 
 
 ;; Do NOT change
@@ -233,20 +233,166 @@
 (define numex-mapAddN
   (mlet "map" numex-map
         (fun null "inc" (call (var "map" ) (fun null "num" (add (var "inc")(var "num")))))))
-#|
+
 ;; Challenge Problem
 
 (struct fun-challenge (nameopt formal body freevars) #:transparent) ;; a recursive(?) 1-argument function
+(define (env-reducer-var env var-self )
+  (cond[(null? env) null]
+       [(equal? (car (car env)) var-self) (list(car env))]
+       [#t (env-reducer-var (cdr env) var-self)]
+       ))
+(define (env-reducer env var-set prev-list)(if (or (set-empty? var-set) (null? env)) prev-list
+                                               (let ([cur-resault (env-reducer-var env (set-first var-set))])
+                                                 (if (null? cur-resault)
+                                                     (env-reducer env (set-remove var-set (set-first var-set)) prev-list)
+                                                     (env-reducer env (set-remove var-set (set-first var-set)) (append prev-list cur-resault)))
+                                               )))
 
+
+(define (compute-sub-free-vars e prev-set)
+  (cond
+    [(var?  e) (set (var-s e))]
+    [(int?  e) prev-set]
+    [(munit? e) prev-set]
+    [(add?  e) (set-union (compute-sub-free-vars (add-e1 e) prev-set) (compute-sub-free-vars (add-e2 e) prev-set))]
+    [(mult? e) (set-union (compute-sub-free-vars (mult-e1 e) prev-set) (compute-sub-free-vars (mult-e2 e) prev-set))]
+    [(neg?  e) (set-union (compute-sub-free-vars (neg-e1 e) prev-set))]
+    [(islthan? e) (set-union (compute-sub-free-vars (islthan-e1 e) prev-set) (compute-sub-free-vars (islthan-e2 e) prev-set))]
+    [(ifzero?  e)  (set-union (compute-sub-free-vars (ifzero-e1 e) prev-set) (compute-sub-free-vars (ifzero-e2 e) prev-set)(compute-sub-free-vars (ifzero-e3 e) prev-set) )]
+    [(ifgthan?  e) (set-union (compute-sub-free-vars (ifgthan-e1 e) prev-set) (compute-sub-free-vars (ifgthan-e2 e) prev-set)(compute-sub-free-vars (ifgthan-e3 e) prev-set)(compute-sub-free-vars (ifgthan-e4 e) prev-set) )]
+    [(fun?  e)    (set-subtract (compute-sub-free-vars (fun-body e) prev-set) (set (fun-nameopt e) (fun-formal e) ))]
+    [(call? e) (set-union (compute-sub-free-vars (call-funexp e) prev-set)(compute-sub-free-vars (call-actual e) prev-set))]
+    [(mlet?  e)    (set-subtract (set-union (compute-sub-free-vars (mlet-e1 e) prev-set) (compute-sub-free-vars (mlet-e2 e) prev-set)) (set (mlet-s e)))]
+    [(apair? e)   (set-union (compute-sub-free-vars (apair-e1 e) prev-set) (compute-sub-free-vars (apair-e2 e) prev-set))]
+    [(first?  e)   (compute-sub-free-vars (first-e1 e) prev-set)]
+    [(second?   e)  (compute-sub-free-vars (second-e1 e) prev-set)]
+    [(ismunit?  e)  (compute-sub-free-vars (ismunit-e e) prev-set)]
+    )
+  )
 ;; We will test this function directly, so it must do
 ;; as described in the assignment
-(define (compute-free-vars e) "CHANGE")
+(define (compute-free-vars e)
+
+  (cond
+    [(var?  e) e]
+    [(int?  e) e]
+    [(munit? e) e]
+    [(add?  e) (add (compute-free-vars (add-e1 e))(compute-free-vars (add-e2 e)))]
+    [(mult?  e)(mult (compute-free-vars (mult-e1 e))(compute-free-vars (mult-e2 e)))]
+    [(neg?  e) (neg (compute-free-vars (neg-e1 e)))]
+    [(islthan? e) (islthan (compute-free-vars (islthan-e1 e))(compute-free-vars (islthan-e2 e)))]
+    [(ifzero?  e) (ifzero (compute-free-vars (compute-free-vars (ifzero-e1 e))) (compute-free-vars (compute-free-vars (ifzero-e2 e))) (compute-free-vars (compute-free-vars (ifzero-e3 e))))]
+    [(ifgthan? e) (ifgthan (compute-free-vars (ifgthan-e1 e)) (compute-free-vars (ifgthan-e2 e)) (compute-free-vars (ifgthan-e3 e)) (compute-free-vars (ifgthan-e4 e)))]
+    [(fun? e) (fun-challenge (fun-nameopt e)(fun-formal e)(fun-body e)(compute-sub-free-vars e (set)))]
+    [(call? e) (call (compute-free-vars (call-funexp)) (compute-free-vars(call-actual)))]
+    [(mlet?  e)   (mlet (mlet-s e) (compute-free-vars(mlet-e1 e))(compute-free-vars(mlet-e2 e)))]
+    [(apair? e)   (apair(compute-free-vars (apair-e1 e))(compute-free-vars (apair-e2 e)))]
+    [(first? e)  (first (compute-free-vars (first-e1 e)))]
+    [(second? e) (second(compute-free-vars (second-e1 e)))]
+    [(ismunit? e) (ismunit (compute-free-vars (ismunit-e e)))]
+    ))
 
 ;; Do NOT share code with eval-under-env because that will make grading
 ;; more difficult, so copy most of your interpreter here and make minor changes
-(define (eval-under-env-c e env) "CHANGE")
-
+(define (eval-under-env-c e env)
+  (cond [(var? e)(envlookup env (var-s e))]
+        [(int? e)(if (integer? (int-num e))
+            e
+            (error "Can't convert a Racket non integer to a NUMEX int"))]
+        [(add? e)
+         (let ([v1 (eval-under-env-c (add-e1 e) env)]
+               [v2 (eval-under-env-c (add-e2 e) env)])
+           (if (and (int? v1)
+                    (int? v2))
+               (int (+ (int-num v1)
+                       (int-num v2)))
+               (error "NUMEX addition applied to non-number")))]
+        [(mult? e)
+         (let ([v1 (eval-under-env-c (mult-e1 e) env)]
+               [v2 (eval-under-env-c (mult-e2 e) env)])
+           (if (and (int? v1)
+                    (int? v2))
+               (int (* (int-num v1)
+                       (int-num v2)))
+               (error "NUMEX multiplication applied to non-number")))]
+        [(neg? e)
+         (let ([v (eval-under-env-c (neg-e1 e) env)])
+           (if (int? v) (int (- (int-num v))) 
+               (error "NUMEX negation on non integer expression" v)))]
+        [(islthan? e)
+         (let ([v1 (eval-under-env-c (islthan-e1 e) env)]
+               [v2 (eval-under-env-c (islthan-e2 e) env)])
+           (if (and (int? v1)
+                    (int? v2))
+               (if(< (int-num v1)(int-num v2))(int 1)(int 0))
+               (error "NUMEX islthan doesn't work on gaurd with non integer values")))]
+        [(ifzero? e)
+         (let ([v (eval-under-env-c (ifzero-e1 e) env)])
+           (if (int? v)
+                (if (= (int-num v) 0 ) (eval-under-env-c (ifzero-e2 e) env)(eval-under-env-c (ifzero-e3 e) env))
+                (error "NUMEX ifzero doesn't work on gaurd with  non integer value")))]
+        [(ifgthan? e)
+         (let ([v1 (eval-under-env-c (ifgthan-e1 e) env)]
+               [v2 (eval-under-env-c (ifgthan-e2 e) env)])
+           (if (and (int? v1)
+                    (int? v2))
+               (if(> (int-num v1)(int-num v2))(eval-under-env-c (ifgthan-e3 e) env)(eval-under-env-c (ifgthan-e4 e) env))
+               (error "NUMEX isgthan doesn't work on gaurds with non integer values")))]
+        [(mlet? e)
+         (let ([v1 (eval-under-env-c (mlet-e1 e) env)])
+           (cond
+             [(not(string? (mlet-s e)))(error "NUMEX mlet doesn't work with non string names")]
+             [#t (eval-under-env-c (mlet-e2 e) (envChanger env (mlet-s e) v1))]
+             ))]
+        [(apair? e)
+         (let ([v1 (eval-under-env-c (apair-e1 e) env)]
+               [v2 (eval-under-env-c (apair-e2 e) env)])
+           (apair v1 v2))]
+        [(first? e)
+         (let ([v (eval-under-env-c (first-e1 e) env)])
+           (if(apair? v)
+              (apair-e1 v)
+              (error "NUMEX Can't get first element of non apair")))]
+         [(second? e)
+          (let ([v (eval-under-env-c (second-e1 e) env)])
+           (if(apair? v)
+              (apair-e2 v)
+              (error "NUMEX Can't get second element of non apair")))]
+         [(munit? e) e]
+         [(ismunit? e)
+           (let ([v (eval-under-env-c (ismunit-e e) env)])
+             (if (munit? v)(int 1)(int 0)))]
+         [(closure? e)
+          (cond[(not (env? (closure-env e)))(error "Numex Closure only works on valid environment")]
+               [(not (fun? (closure-fun e)))(error "Numex Closure need a valid function")]
+               [#t (closure (closure-env e)(closure-fun e))])]
+         [(fun-challenge? e)
+          (cond[(not (or(null? (fun-challenge-nameopt e))(string? (fun-challenge-nameopt e))))(error "Numex function name should be string or null")]
+               [(not (string?  (fun-challenge-formal e)))(error "Numex argument should be a string")]
+               [(not (set? (fun-challenge-freevars e))) (error "Numex fun-challenge need a set")]
+               [#t (closure (env-reducer env (fun-challenge-freevars e) null) e)])]
+         [(call? e)
+          (let ([v1 (eval-under-env-c (call-funexp e) env)]
+                [v2 (eval-under-env-c (call-actual e) env)])
+            (if(and (closure? v1) (NUMEX-value? v2)) 
+               (let([tempEnv (envChanger (closure-env v1) (fun-formal (closure-fun v1)) v2)])
+                 (if (null?(fun-nameopt (closure-fun v1)))
+                     (eval-under-env-c (fun-body (closure-fun v1)) tempEnv)
+                     (eval-under-env-c (fun-body (closure-fun v1)) (envChanger tempEnv (fun-nameopt (closure-fun v1)) v1))))
+               (error "Function call should have a closure and value")))]
+        ;; CHANGE add more cases here
+        [#t (error (format "bad NUMEX expression: ~v" e))]))
 ;; Do NOT change this
 (define (eval-exp-c e)
   (eval-under-env-c (compute-free-vars e) null))
-|#
+(define envList (list (cons "x" (int 2))
+					  (cons "y" (int 3))
+					  (cons "z" (int 4))
+					  (cons "p" (int 5))
+					  (cons "q" (int 6))
+					  (cons "t" (int 7))
+					  (cons "a" (int 8))
+					  (cons "b" (int 9))
+					  (cons "u" (int 10))
+					  (cons "s" (int 11))))

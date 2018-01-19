@@ -223,22 +223,17 @@
 
 ;; Problem 4
 
-(define (numex-map input-fun)
-  (cond 
-    [(not(fun? input-fun))(error "numex-map need function as first input")]
-    [#t (fun "list-func" "input-list" (cond
-                                 [(munit? (var "input-list"))(munit)]
-                                 [#t (apair (call input-fun (first (var "input-list")))(call (var "list-func") (second (var "input-list"))))]
-                                ))]
-    )
-  )
-#|
+(define numex-map (fun null "input-fun" (fun "mapper" "input-list" (ifzero (ismunit (var "input-list"))
+                                                                           (apair (call (var "input-fun") (first  (var "input-list")))
+                                                                                  (call (var "mapper")    (second (var "input-list"))))
+                                                                           (munit)
+                                                                           )
+                                             )))
+
 (define numex-mapAddN
   (mlet "map" numex-map
-        "CHANGE (notice map is now in NUMEX scope)"))
-
-
-
+        (fun null "inc" (call (var map ) (fun null "num" (add (var "inc")(var "num")))))))
+#|
 ;; Challenge Problem
 
 (struct fun-challenge (nameopt formal body freevars) #:transparent) ;; a recursive(?) 1-argument function

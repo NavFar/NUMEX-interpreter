@@ -226,18 +226,18 @@
 (define (numex-map input-fun)
   (cond 
     [(not(fun? input-fun))(error "numex-map need function as first input")]
-    [#t (fun "list-func" input-list (cond
-                                 [(munit? input-list)(munit)]
-                                 [#t (apair (call input-fun (first input-list))(call (var "list-func") (second input-list)))]
+    [#t (fun "list-func" "input-list" (cond
+                                 [(munit? (var "input-list"))(munit)]
+                                 [#t (apair (call input-fun (first (var "input-list")))(call (var "list-func") (second (var "input-list"))))]
                                 ))]
     )
   )
-
-
 #|
 (define numex-mapAddN
   (mlet "map" numex-map
         "CHANGE (notice map is now in NUMEX scope)"))
+
+
 
 ;; Challenge Problem
 

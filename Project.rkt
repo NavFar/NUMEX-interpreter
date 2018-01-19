@@ -232,7 +232,7 @@
 
 (define numex-mapAddN
   (mlet "map" numex-map
-        (fun null "inc" (call (var map ) (fun null "num" (add (var "inc")(var "num")))))))
+        (fun null "inc" (call (var "map" ) (fun null "num" (add (var "inc")(var "num")))))))
 #|
 ;; Challenge Problem
 

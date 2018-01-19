@@ -2,7 +2,7 @@
 
 ;; syntax: https://docs.racket-lang.org/rackunit/api.html
 
-(require "Project/project.rkt")
+(require "Project.rkt")
 
 ; This file uses Racket's unit-testing framework, which is convenient but not required of you.
 
